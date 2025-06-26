@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>7-Day Weather Forecast</title>
+  <link rel="stylesheet" href=JS/bootstrap.min.css"">
+  <link rel="stylesheet" href="CSS/style.css" />
+</head>
+<body>
+  <div class="container my-5">
+    <h1 class="text-center mb-4">7-Day Weather Forecast</h1>
+
+    <div class="input-group mb-4">
+      <input type="text" id="locationInput" class="form-control" placeholder="Enter a city or location" />
+      <button class="btn btn-primary" onclick="getWeather()">Search</button>
+    </div>
+
+    <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
+
+    <div id="forecastContainer" class="row gy-4"></div>
+  </div>
+
+  <script src="JS/app.js"></script>
+</body>
+</html>

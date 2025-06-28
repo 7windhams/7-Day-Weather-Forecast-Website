@@ -4,23 +4,65 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>7-Day Weather Forecast</title>
-  <link rel="stylesheet" href=JS/bootstrap.min.css"">
-  <link rel="stylesheet" href="CSS/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="./CSS/bootstrap.min.css">
+  <link rel="stylesheet" href="./CSS/style.css" />
 </head>
 <body>
+  <!-- Animated Cloud Elements -->
+  <div class="cloud cloud1"></div>
+  <div class="cloud cloud2"></div>
+  <div class="cloud cloud3"></div>
+  
   <div class="container my-5">
     <h1 class="text-center mb-4">7-Day Weather Forecast</h1>
 
+    <div class="alert alert-info" role="alert">
+      <strong>Note:</strong> If you're seeing "failed to fetch" errors, this app needs to be served through a web server. 
+      See the README or run <code>start-server.bat</code> to start a local server.
+    </div>
+
     <div class="input-group mb-4">
-      <input type="text" id="locationInput" class="form-control" placeholder="Enter a city or location" />
+      <input type="text" id="locationInput" class="form-control" placeholder="Enter a city or location (US locations work best)" />
       <button class="btn btn-primary" onclick="getWeather()">Search</button>
+      <button class="btn btn-outline-primary" id="updateBtn" onclick="updateWeather()" disabled>
+        <i class="bi bi-arrow-clockwise"></i> Update
+      </button>
+      <button class="btn btn-outline-success" id="favoriteBtn" onclick="toggleFavorite()" disabled>
+        <i class="bi bi-heart"></i> Add to Favorites
+      </button>
+    </div>
+
+    <!-- Favorites Section -->
+    <div id="favoritesSection" class="mb-4 d-none">
+      <h5 class="text-center mb-3">
+        <i class="bi bi-heart-fill text-danger"></i> Favorite Places
+      </h5>
+      <div id="favoritesList" class="d-flex flex-wrap justify-content-center gap-2">
+        <!-- Favorite buttons will be added here dynamically -->
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-center mb-3">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="tempToggle" onchange="toggleTemperature()">
+        <label class="form-check-label" for="tempToggle">
+          Display in Celsius
+        </label>
+      </div>
     </div>
 
     <div id="errorMessage" class="alert alert-danger d-none" role="alert"></div>
 
+    <div id="locationDateInfo" class="text-center mb-4 d-none">
+      <h4 id="locationName" class="text-primary"></h4>
+      <p id="currentDate" class="text-muted mb-0"></p>
+    </div>
+
     <div id="forecastContainer" class="row gy-4"></div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
   <script src="JS/app.js"></script>
 </body>
 </html>

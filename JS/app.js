@@ -26,6 +26,9 @@ const findMe = () => {
 function toggleTemperature() {
   const isCelsius = document.getElementById("tempToggle").checked;
   displayForecast(currentForecast, isCelsius);
+  if (currentForecast.length > 0) {
+    generateWeatherSummary(currentForecast, isCelsius);
+  }
 }
 
 function convertToCelsius(f) {
@@ -145,6 +148,9 @@ async function getWeather() {
   errorMessage.classList.add("d-none");
   locationDateInfo.classList.add("d-none");
   forecastContainer.innerHTML = "";
+  hideUVIndex();
+  hideWeatherSummary();
+  hideWeatherSummary();
 
   if (!location.trim()) {
     errorMessage.textContent = "Please enter a location.";
@@ -224,11 +230,17 @@ async function getWeather() {
     displayLocationAndDate(geoData[0].display_name || location);
     
     displayForecast(currentForecast, isCelsius);
+    
+    // Generate weather summary
+    generateWeatherSummary(currentForecast, isCelsius);
 
     // Store the current location and enable buttons
     currentLocation = location;
     document.getElementById("updateBtn").disabled = false;
     updateFavoriteButton();
+    
+    // Fetch and display UV Index
+    fetchUVIndex(lat, lon);
   } catch (error) {
     console.error("Weather fetch error:", error);
     
@@ -243,6 +255,10 @@ async function getWeather() {
     // Disable buttons on error
     document.getElementById("updateBtn").disabled = true;
     document.getElementById("favoriteBtn").disabled = true;
+    
+    // Hide UV Index section on error
+    hideUVIndex();
+    hideWeatherSummary();
   }
 }
 
@@ -376,3 +392,166 @@ function updateFavoriteButton() {
 
 // Initialize favorites on page load
 document.addEventListener('DOMContentLoaded', initializeFavorites);
+
+// UV Index functionality
+async function fetchUVIndex(lat, lon) {
+  try {
+    // Use EPA UV Index API or OpenUV API as backup
+    // For now, we'll use a simple calculation based on time and location
+    // In production, you'd want to use a proper UV API
+    const uvIndex = calculateEstimatedUV(lat, lon);
+    displayUVIndex(uvIndex);
+  } catch (error) {
+    console.error("UV Index fetch error:", error);
+    // Hide UV section on error
+    document.getElementById("uvIndexSection").classList.add("d-none");
+  }
+}
+
+function calculateEstimatedUV(lat, lon) {
+  // Simple UV estimation based on latitude and time
+  // This is a basic estimation - in production use a real UV API
+  const now = new Date();
+  const hour = now.getHours();
+  
+  // Base UV based on latitude (closer to equator = higher UV)
+  let baseUV = Math.max(0, 11 - Math.abs(lat) / 8);
+  
+  // Time of day adjustment
+  let timeMultiplier = 0;
+  if (hour >= 6 && hour <= 18) {
+    // Parabolic curve peaking at noon
+    const hourFromNoon = Math.abs(hour - 12);
+    timeMultiplier = Math.max(0, 1 - (hourFromNoon / 6) ** 2);
+  }
+  
+  // Season adjustment (very basic)
+  const month = now.getMonth();
+  let seasonMultiplier = 1;
+  if (month >= 5 && month <= 8) { // Summer months
+    seasonMultiplier = 1.2;
+  } else if (month === 11 || month === 0 || month === 1) { // Winter months
+    seasonMultiplier = 0.7;
+  }
+  
+  const uvIndex = Math.round(baseUV * timeMultiplier * seasonMultiplier);
+  return Math.max(0, Math.min(11, uvIndex)); // Clamp between 0-11
+}
+
+function displayUVIndex(uvIndex) {
+  const uvSection = document.getElementById("uvIndexSection");
+  const uvValue = document.getElementById("uvIndexValue");
+  const uvLevel = document.getElementById("uvIndexLevel");
+  const uvAdvice = document.getElementById("uvIndexAdvice");
+  
+  uvValue.textContent = uvIndex;
+  
+  // Determine UV level and advice
+  let level, advice, levelClass;
+  
+  if (uvIndex <= 2) {
+    level = "Low";
+    advice = "Minimal sun protection required. Sunglasses recommended.";
+    levelClass = "uv-low";
+  } else if (uvIndex <= 5) {
+    level = "Moderate";
+    advice = "Use sunscreen SPF 30+, seek shade during midday hours.";
+    levelClass = "uv-moderate";
+  } else if (uvIndex <= 7) {
+    level = "High";
+    advice = "Sunscreen SPF 30+ essential. Avoid sun during midday.";
+    levelClass = "uv-high";
+  } else if (uvIndex <= 10) {
+    level = "Very High";
+    advice = "Extra protection needed. Avoid outdoor activities 10am-4pm.";
+    levelClass = "uv-very-high";
+  } else {
+    level = "Extreme";
+    advice = "Stay indoors or seek shade. Sunscreen SPF 50+ required.";
+    levelClass = "uv-extreme";
+  }
+  
+  uvLevel.textContent = level;
+  uvLevel.className = `uv-level ${levelClass}`;
+  uvAdvice.textContent = advice;
+  
+  // Show UV section
+  uvSection.classList.remove("d-none");
+}
+
+function hideUVIndex() {
+  document.getElementById("uvIndexSection").classList.add("d-none");
+}
+
+function generateWeatherSummary(periods, isCelsius = false) {
+  if (!periods || periods.length === 0) return;
+  
+  const weatherSummarySection = document.getElementById("weatherSummarySection");
+  const todayRange = document.getElementById("todayRange");
+  const todayConditions = document.getElementById("todayConditions");
+  const weekOutlook = document.getElementById("weekOutlook");
+  const weatherAlert = document.getElementById("weatherAlert");
+  
+  // Get today's data (first period)
+  const today = periods[0];
+  const tomorrow = periods.length > 1 ? periods[1] : null;
+  
+  // Calculate today's temperature range
+  let highTemp = today.temperature;
+  let lowTemp = today.temperature;
+  
+  // Look for day/night pair for today
+  if (tomorrow && today.isDaytime && !tomorrow.isDaytime) {
+    lowTemp = tomorrow.temperature;
+  } else if (!today.isDaytime && tomorrow && tomorrow.isDaytime) {
+    highTemp = tomorrow.temperature;
+    lowTemp = today.temperature;
+  }
+  
+  // Convert temperatures if needed
+  if (isCelsius) {
+    highTemp = convertToCelsius(highTemp);
+    lowTemp = convertToCelsius(lowTemp);
+  }
+  
+  const unit = isCelsius ? "°C" : "°F";
+  todayRange.textContent = `${highTemp}${unit} / ${lowTemp}${unit}`;
+  todayConditions.textContent = today.shortForecast;
+  
+  // Generate week outlook
+  const conditions = periods.slice(0, 7).map(p => p.shortForecast.toLowerCase());
+  let outlook = "Mixed conditions";
+  
+  if (conditions.some(c => c.includes("rain") || c.includes("storm"))) {
+    outlook = "Rainy periods expected";
+  } else if (conditions.some(c => c.includes("snow"))) {
+    outlook = "Snow possible";
+  } else if (conditions.every(c => c.includes("sunny") || c.includes("clear"))) {
+    outlook = "Mostly sunny week";
+  } else if (conditions.some(c => c.includes("cloud"))) {
+    outlook = "Variable cloudiness";
+  }
+  
+  weekOutlook.textContent = outlook;
+  
+  // Check for weather alerts (simple logic)
+  let alert = "No alerts";
+  if (conditions.some(c => c.includes("storm") || c.includes("severe"))) {
+    alert = "Severe weather possible";
+  } else if (conditions.some(c => c.includes("rain") && c.includes("heavy"))) {
+    alert = "Heavy rain expected";
+  } else if (Math.max(...periods.slice(0, 3).map(p => p.temperature)) > 95) {
+    alert = "Heat advisory";
+  } else if (Math.min(...periods.slice(0, 3).map(p => p.temperature)) < 32) {
+    alert = "Freeze warning";
+  }
+  
+  weatherAlert.textContent = alert;
+  
+  // Show the summary section
+  weatherSummarySection.classList.remove("d-none");
+}
+
+function hideWeatherSummary() {
+  document.getElementById("weatherSummarySection").classList.add("d-none");
+}

@@ -150,7 +150,7 @@ async function getWeather() {
   forecastContainer.innerHTML = "";
   hideUVIndex();
   hideWeatherSummary();
-  hideWeatherSummary();
+  hideRainbow();
 
   if (!location.trim()) {
     errorMessage.textContent = "Please enter a location.";
@@ -233,6 +233,9 @@ async function getWeather() {
     
     // Generate weather summary
     generateWeatherSummary(currentForecast, isCelsius);
+    
+    // Show rainbow decoration
+    showRainbow();
 
     // Store the current location and enable buttons
     currentLocation = location;
@@ -259,6 +262,7 @@ async function getWeather() {
     // Hide UV Index section on error
     hideUVIndex();
     hideWeatherSummary();
+    hideRainbow();
   }
 }
 
@@ -554,4 +558,12 @@ function generateWeatherSummary(periods, isCelsius = false) {
 
 function hideWeatherSummary() {
   document.getElementById("weatherSummarySection").classList.add("d-none");
+}
+
+function showRainbow() {
+  document.getElementById("rainbowDecoration").classList.remove("d-none");
+}
+
+function hideRainbow() {
+  document.getElementById("rainbowDecoration").classList.add("d-none");
 }
